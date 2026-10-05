@@ -12,12 +12,12 @@ return {
     opts = {
       filesystem = {
         filtered_items = {
-          visible = false,       -- hide filtered items by default
+          visible = true,        -- show filtered items by default
           hide_dotfiles = false, -- show dotfiles (like .env)
           hide_gitignored = false,
           hide_ignored = false,
-          hide_by_name = { ".git" },
-          never_show = { ".DS_Store" },
+          hide_by_name = {},
+          never_show = {},
         },
         follow_current_file = {
           enabled = true,        -- auto-reveal current file in tree (like VS Code)
