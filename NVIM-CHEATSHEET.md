@@ -87,6 +87,7 @@ there before trying to run queries.
 | Toggle word wrap | `Space u w` |
 | Scroll horizontally | `Space z h` / `Space z l` (10 columns) |
 | Toggle auto-save | `Space u a` |
+| Check auto-save, date, last Ex command, or pending keys | Statusline at the bottom |
 | Markdown in-buffer / browser preview | `Space m p` / `Space m b` |
 | Quit | `Space q` |
 

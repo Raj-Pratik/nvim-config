@@ -44,6 +44,32 @@ return {
       opts.options.globalstatus = true
       opts.sections = opts.sections or {}
       opts.sections.lualine_c = opts.sections.lualine_c or {}
+      table.insert(opts.sections.lualine_x, {
+        function()
+          local ok, autosave = pcall(require, "auto-save")
+          if not ok then
+            return "AUTO SAVE ?"
+          end
+          return autosave.enabled() and "AUTO SAVE ON" or "AUTO SAVE OFF"
+        end,
+        color = function()
+          local ok, autosave = pcall(require, "auto-save")
+          if not ok then
+            return { fg = "#8294aa" }
+          end
+          return autosave.enabled() and { fg = "#a4d66d", gui = "bold" }
+            or { fg = "#ff6b6b", gui = "bold" }
+        end,
+      })
+      vim.api.nvim_create_autocmd("User", {
+        pattern = { "AutoSaveEnable", "AutoSaveDisable" },
+        callback = function()
+          local ok, lualine = pcall(require, "lualine")
+          if ok then
+            lualine.refresh()
+          end
+        end,
+      })
       table.insert(opts.sections.lualine_c, {
         function()
           local ok, navic = pcall(require, "nvim-navic")
@@ -77,6 +103,22 @@ return {
         end,
         cond = function()
           return vim.fn.reg_recording() ~= ""
+        end,
+      })
+      table.insert(opts.sections.lualine_x, function()
+        return os.date("%a %b %d")
+      end)
+      table.insert(opts.sections.lualine_x, {
+        function()
+          local command = vim.fn.histget("cmd", -1)
+          if command == "" then
+            return ""
+          end
+          command = command:gsub("[%c]", " ")
+          return "CMD " .. vim.fn.strcharpart(command, 0, 28)
+        end,
+        cond = function()
+          return vim.fn.histget("cmd", -1) ~= ""
         end,
       })
       return opts

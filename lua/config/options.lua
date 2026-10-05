@@ -4,6 +4,8 @@
 
 -- Enable mouse in all modes (required for Ctrl+Click)
 vim.opt.mouse = "a"
+vim.opt.showcmd = true
+vim.opt.showcmdloc = "statusline"
 
 vim.g.lazyvim_picker = "telescope"
 vim.opt.number = true

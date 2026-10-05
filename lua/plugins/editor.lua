@@ -132,7 +132,17 @@ return {
     event = { "InsertLeave", "TextChanged" },
     cmd = "ASToggle",
     keys = {
-      { "<leader>ua", "<cmd>ASToggle<cr>", desc = "Toggle Auto Save" },
+      {
+        "<leader>ua",
+        function()
+          local autosave = require("auto-save")
+          autosave.toggle()
+          vim.notify("Auto-save " .. (autosave.enabled() and "ON" or "OFF"), vim.log.levels.INFO, {
+            title = "Auto-save",
+          })
+        end,
+        desc = "Toggle Auto Save",
+      },
     },
     opts = {
       enabled = true,

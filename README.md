@@ -25,7 +25,7 @@ Need a shortcut by task? Start with the [Neovim + tmux cheat sheet](NVIM-CHEATSH
 | Delete to line start | `Cmd+Backspace` | In insert and normal mode |
 | Toggle word wrap | `Space u w` | |
 | Scroll horizontally | `Space z h` / `Space z l` | 10 columns left / right; wrap must be off |
-| Toggle auto-save | `Space u a` | Starts enabled; saves after a short pause |
+| Toggle auto-save | `Space u a` | Starts enabled; statusline shows ON/OFF and the toggle confirms it |
 | Markdown preview | `Space m p` / `Space m b` | Render in Neovim / open browser preview |
 | Toggle terminal panel | `Cmd+H` | `Space t h` |
 | Copilot Chat | `Space a c` | `:CopilotChat` |
@@ -49,6 +49,7 @@ Need a shortcut by task? Start with the [Neovim + tmux cheat sheet](NVIM-CHEATSH
 In the VS Code terminal, `Cmd+J`, `Cmd+K`, `Cmd+P`, and `Cmd+Shift+F` are
 forwarded to Neovim. Use `Space s C` for the command picker. See the
 [cheat sheet](NVIM-CHEATSHEET.md) for task-based instructions and alternatives.
+The statusline also shows the date, the last Ex command, and pending key sequences.
 
 ## Search and References
 
