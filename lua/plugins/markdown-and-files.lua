@@ -11,13 +11,12 @@ return {
       { "<leader>mp", "<cmd>RenderMarkdown toggle<cr>", ft = "markdown", desc = "Toggle Markdown render" },
     },
     opts = {
-      enabled = true,
+      enabled = false,
       render_modes = { "n", "c" },    -- render in normal mode and command mode
       heading = {
         enabled = true,
         icons = { "󰲡 ", "󰲣 ", "󰲥 ", "󰲧 ", "󰲩 ", "󰲫 " },
         width = "full",
-        backgrounds = true,
       },
       code = {
         enabled = true,

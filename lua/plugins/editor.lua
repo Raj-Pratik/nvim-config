@@ -14,8 +14,9 @@ return {
         filtered_items = {
           visible = false,       -- hide filtered items by default
           hide_dotfiles = false, -- show dotfiles (like .env)
-          hide_gitignored = true,
-          hide_by_name = { ".git", "node_modules", "vendor", ".next", "dist", "build" },
+          hide_gitignored = false,
+          hide_ignored = false,
+          hide_by_name = { ".git" },
           never_show = { ".DS_Store" },
         },
         follow_current_file = {
