@@ -17,10 +17,82 @@ local chat_modes = {
   },
   Autopilot = {
     tools = { "copilot" },
-    trusted_tools = { "buffer", "file", "glob", "grep", "gitdiff", "selection", "edit" },
-    description = "Read and edit automatically; ask before shell commands",
+    trusted_tools = { "buffer", "file", "glob", "grep", "gitdiff", "selection", "edit", "bash" },
+    description = "Read, edit, and run shell commands automatically; ask before URL fetches",
   },
 }
+
+local default_mode = "Autopilot"
+vim.g.copilot_chat_mode = vim.g.copilot_chat_mode or default_mode
+
+if vim.g.vscode then
+  vim.keymap.set("n", "<leader>ac", function()
+    require("vscode").call("workbench.action.chat.open")
+  end, { desc = "Open VS Code Copilot Chat" })
+end
+
+local function find_skill_files()
+  local files = {}
+  local roots = {
+    vim.fs.joinpath(vim.fn.getcwd(), ".agents", "skills"),
+    vim.fs.joinpath(vim.fn.getcwd(), ".github", "skills"),
+    vim.fs.joinpath(vim.fn.getcwd(), ".claude", "skills"),
+    vim.fn.expand("~/.agents/skills"),
+    vim.fn.expand("~/.config/nvim/skills"),
+  }
+
+  for _, root in ipairs(roots) do
+    vim.list_extend(files, vim.fn.globpath(root, "**/SKILL.md", false, true))
+  end
+
+  local extension_root = vim.fn.expand("~/.vscode/extensions")
+  vim.list_extend(files, vim.fn.globpath(extension_root, "*/skills/*/SKILL.md", false, true))
+  vim.list_extend(files, vim.fn.globpath(extension_root, "*/src/lm/skills/*/SKILL.md", false, true))
+
+  for _, app_path in ipairs({
+    "/Applications/Visual Studio Code.app",
+    vim.fn.expand("~/Applications/Visual Studio Code.app"),
+    vim.fn.expand("~/Downloads/Visual Studio Code.app"),
+  }) do
+    vim.list_extend(files, vim.fn.glob(
+      app_path .. "/Contents/Resources/app/extensions/*/skills/*/SKILL.md",
+      false,
+      true
+    ))
+    vim.list_extend(files, vim.fn.glob(
+      app_path .. "/Contents/Resources/app/extensions/copilot/assets/prompts/skills/*/SKILL.md",
+      false,
+      true
+    ))
+  end
+
+  return files
+end
+
+local skill_prompt_names = {}
+
+local function load_skill_prompts(prompts)
+  prompts = prompts or {}
+  for name in pairs(skill_prompt_names) do
+    prompts[name] = nil
+  end
+  skill_prompt_names = {}
+
+  local loaded = 0
+  for _, path in ipairs(find_skill_files()) do
+    local skill_name = vim.fn.fnamemodify(vim.fn.fnamemodify(path, ":h"), ":t")
+    if not prompts[skill_name] then
+      local content = table.concat(vim.fn.readfile(path), "\n")
+      prompts[skill_name] = {
+        prompt = "Apply these skill instructions to the current request:\n\n" .. content,
+        description = "Load skill instructions",
+      }
+      skill_prompt_names[skill_name] = true
+      loaded = loaded + 1
+    end
+  end
+  return prompts, loaded
+end
 
 local original_system_prompt
 
@@ -29,7 +101,7 @@ local function copilot_chat_status()
   if not ok then
     return " Copilot Chat"
   end
-  return string.format(" Copilot | %s | %s ", vim.g.copilot_chat_mode or "Ask", chat.config.model or "auto")
+  return string.format(" Copilot | %s | %s ", vim.g.copilot_chat_mode or default_mode, chat.config.model or "auto")
 end
 
 _G.CopilotChatStatus = copilot_chat_status
@@ -100,6 +172,7 @@ return {
   -- GitHub Copilot — AI inline completions
   {
     "zbirenbaum/copilot.lua",
+    enabled = not vim.g.vscode,
     cmd = "Copilot",
     event = "InsertEnter",
     opts = {
@@ -148,6 +221,7 @@ return {
   -- CopilotChat — conversational AI chat panel (like VS Code Copilot Chat)
   {
     "CopilotC-Nvim/CopilotChat.nvim",
+    enabled = not vim.g.vscode,
     branch = "main",
     dependencies = {
       "zbirenbaum/copilot.lua",
@@ -165,6 +239,27 @@ return {
         desc = "Toggle Copilot Chat",
       },
       { "<leader>am", function() require("CopilotChat").select_model() end, desc = "Choose Copilot Model" },
+      {
+        "<leader>aL",
+        function()
+          local chat = require("CopilotChat")
+          local _, loaded = load_skill_prompts(chat.config.prompts)
+          if chat.chat then
+            chat.chat.config.prompts = chat.config.prompts
+          end
+          vim.notify(string.format("Loaded %d Copilot skill prompts; use /skill-name", loaded))
+        end,
+        desc = "Reload Copilot Skills",
+      },
+      {
+        "<leader>an",
+        function()
+          require("CopilotChat").reset()
+        end,
+        desc = "Start New Copilot Chat",
+      },
+      { "<leader>as", "<cmd>CopilotChatSave<cr>", desc = "Save Copilot Chat" },
+      { "<leader>ah", "<cmd>CopilotChatLoad<cr>", desc = "Load Copilot Chat History" },
       {
         "<leader>aM",
         select_copilot_mode,
@@ -207,7 +302,7 @@ return {
           chat.open()
           chat.chat:focus()
           vim.cmd.startinsert()
-          vim.notify("Use macOS Dictation to speak your prompt, then press Ctrl-S to send")
+          vim.notify("Use macOS Dictation to speak your prompt, then press Enter to send")
         end,
         desc = "Voice Prompt (macOS Dictation)",
       },
@@ -231,8 +326,9 @@ return {
     opts = {
       model = "gpt-5-mini",
       instruction_files = { ".github/copilot-instructions.md", "copilot-instructions.md", "AGENTS.md" },
-      tools = {},
-      trusted_tools = {},
+      prompts = load_skill_prompts(),
+      tools = vim.deepcopy(chat_modes[default_mode].tools),
+      trusted_tools = vim.deepcopy(chat_modes[default_mode].trusted_tools),
       window = {
         layout = "vertical",  -- side panel like VS Code
         width = 0.42,
@@ -240,9 +336,12 @@ return {
       },
       show_help = true,
       auto_follow_cursor = true,
+      auto_fold = true,
+      auto_insert_mode = true,
+      insert_at_end = true,
       mappings = {
         close = { normal = "q", insert = "<C-c>" },
-        submit_prompt = { normal = "<CR>", insert = "<C-s>" },
+        submit_prompt = { normal = "<CR>", insert = "<CR>" },
         accept_diff = { normal = "<C-y>", insert = "<C-y>" },
         reset = { normal = "<C-l>", insert = "<C-l>" },
       },

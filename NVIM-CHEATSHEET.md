@@ -8,6 +8,7 @@ Launch Neovim from the project root so project search, LSP, Git, and sessions us
 | --- | --- |
 | Open a file or search words in the project | [Find files and text](#find-files-and-text) |
 | Jump to code, references, or errors | [Navigate code](#navigate-code) |
+| Set breakpoints and inspect a running program | [Debug in Neovim](#debug-in-neovim) |
 | Switch files, close a tab, or split the screen | [Manage files and windows](#manage-files-and-windows) |
 | Stage, commit, push, review changes, or fix conflicts | [Work with Git](#work-with-git) |
 | Open a shell, run Lazygit, or keep a server running | [Use terminals](#use-terminals) and [Use tmux](#use-tmux) |
@@ -30,10 +31,10 @@ commands for the current filetype and buffer.
 | `a` | Copilot | Chat, Plan/Agent/Autopilot, model, code actions, Keep/Undo/Stop, voice |
 | `b` | Buffers | Pick and close open files |
 | `c` | Code | LSP actions, imports, rename, symbol outline |
-| `d` | Debug | Breakpoints, debug controls, Go test debugging |
+| `d` | Debug | Breakpoints, stepping, variable inspection, REPL, Go test debugging |
 | `D` | Database | Database UI, add a connection, find a query buffer |
 | `e` | Explorer | Project file tree |
-| `f` | Files | File search and recent files |
+| `f` | Files | Find in current file, project text search, file search, recent files |
 | `g` | Git | Lazygit, hunks, diffs, history, conflicts, push/pull |
 | `h` | Harpoon | Pin files and jump between them |
 | `m` | Markdown | In-buffer rendering and browser preview (Markdown buffers) |
@@ -55,6 +56,9 @@ a Go file. The tables below give the most-used exact shortcuts in each menu.
 
 | Keys | Action |
 | --- | --- |
+| `Space d b` / `Space d B` | Toggle a breakpoint / set a conditional breakpoint |
+| `Space d c` / `Space d O` / `Space d i` / `Space d o` | Continue / step over / step into / step out |
+| `Space d u` / `Space d e` / `Space d r` | Toggle debugger panels / evaluate here or selection / toggle REPL |
 | `Space d g t` / `Space d g l` | Debug a Go test / debug the last Go test again |
 | `Space D` / `Space D a` / `Space D f` | Toggle database UI / add connection / find query buffer |
 | `Space h a` / `Space h h` | Pin current file / open Harpoon list |
@@ -78,7 +82,8 @@ there before trying to run queries.
 | Escape insert or visual mode | `jj` |
 | Command palette | `Space s C` |
 | Find files | `Cmd-P` or `Space Space` |
-| Project text search | `Cmd-Shift-F` or `Space /` |
+| Find in current file | `Space f c` |
+| Project text search | `Space f g` or `Space //` |
 | Search word under cursor | `Space s w` |
 | File explorer | `Space e` |
 | Undo / redo | `u` / `Ctrl-r` |
@@ -93,9 +98,38 @@ there before trying to run queries.
 
 ## Find files and text
 
-Use `Cmd-P` to open a file by name, or `Space Space` if the terminal does not pass Cmd keys to Neovim. Use `Cmd-Shift-F` or `Space /` to find text across the project. Type a few words to narrow results; press `Enter` to open a result and `Esc` to close the picker.
+Use `Cmd-P` to open a file by name, or `Space Space` if the terminal does not pass Cmd keys to Neovim. Use `Space f c` to find text in the current file and `Space f g` or `Space / /` to search across the project. Type a few words to narrow results; press `Enter` to open a result and `Esc` to close the picker. Press `Space f` and pause to see these search actions in the WhichKey popup.
 
-Search starts at the project root and respects `.gitignore`. `Space s w` searches for the word under the cursor. To search only the current directory, use `Space s G`.
+Search starts at the project root and respects `.gitignore`. `Space /` opens the search-options prefix: press `c` to toggle match case, `w` to toggle whole-word matching, or `/` to start project grep. In either grep picker, `Alt+C` and `Alt+W` toggle those options too. Settings are shared by both search scopes for the current Neovim session and stay active until toggled again. Notifications confirm each change. `Space s w` searches for the word under the cursor. To search only the current directory, use `Space s G`.
+
+## Debug in Neovim
+
+The DAP core, debugger panels, inline variable values, and adapters are already
+installed for the configured languages. Start Neovim from the project root and
+open a source file. Use `:Mason` to check or install a language's debug adapter
+if a launch configuration is missing.
+
+1. Put the cursor on a line and press `Space d b` to toggle a breakpoint. Use
+	`Space d B` to enter a conditional breakpoint expression.
+2. Press `Space d c` to start or continue. Choose a launch configuration if
+	Neovim offers a list. For Go tests, use `Space d g t`; repeat the last test
+	with `Space d g l`.
+3. The DAP UI opens when a session starts. The scopes panel shows local and
+	captured variables, the stacks panel shows threads and frames, and the
+	breakpoints panel lists your breakpoints. Inline virtual text may show values
+	beside variables in the source buffer while execution is paused.
+4. Step with `Space d O` (over), `Space d i` (into), and `Space d o` (out).
+	`Space d c` resumes; `Space d P` pauses; `Space d t` terminates. `Space d j`
+	and `Space d k` move down/up the stack frames.
+
+Use `Space d e` to evaluate the expression under the cursor, or a visual
+selection. For persistent watches, focus the Watches panel, enter Insert mode,
+type an expression, and press Enter. In that panel, `e` edits a watch and `d`
+removes it. `Space d r` toggles the DAP REPL; enter an expression there to
+inspect its result. The DAP UI also includes a Console panel for debugger output
+and integrated-terminal sessions; it is separate from the normal shell terminal
+(`Space t t`). Press `Space d u` to toggle the panels manually. Press `Space d`
+and pause to see the debugger actions in WhichKey.
 
 ## Navigate code
 
@@ -149,7 +183,6 @@ files in sequence. Harpoon is better for a small set of files you revisit often.
 | Terminal in a full tab | `Space t f` |
 | New terminal | `Space t n` |
 | Pick / rename terminal session | `Space t P` / `Space t N` |
-| Lazygit in terminal | `Space t g` |
 | Lazygit floating UI | `Space g g` |
 | Send current line | `Space t s` |
 | Send visual selection | `Space t s` in visual mode |
@@ -160,8 +193,13 @@ files in sequence. Harpoon is better for a small set of files you revisit often.
 `Space t n` creates a named floating shell. `Space t P` switches between open
 sessions; `Space t N` renames the active session. The title bar shows the
 session name and its `Esc` / `Ctrl-q` controls.
+`jj` exits terminal mode only in Neovim's built-in `:terminal`; Lazygit and other
+plugin terminals receive `jj` as input.
 
 ## Use Copilot
+
+When Neovim runs inside VS Code through `vscode-neovim`, `Space a c` opens the
+native VS Code Copilot Chat. Standalone Neovim uses CopilotChat.nvim instead.
 
 | Action | Keys |
 | --- | --- |
@@ -171,6 +209,8 @@ session name and its `Esc` / `Ctrl-q` controls.
 | Copilot Chat | `Space a c` |
 | Choose model | `Space a m` |
 | Choose mode | `Space a M` |
+| New chat / reload skills | `Space a n` / `Space a L` |
+| Save / load chat history | `Space a s` / `Space a h` |
 | Show active model and mode | `Space a S` |
 | Open Plan mode | `Space a P` |
 | Open chat in Autopilot mode | `Space a A` |
@@ -185,15 +225,21 @@ session name and its `Esc` / `Ctrl-q` controls.
 
 Run `:Copilot auth` once, then `:Copilot status` to check the connection.
 
-Ask mode starts with no callable tools. Plan mode reads workspace context and
-returns a plan without editing or running shell commands. Agent mode offers
-workspace tools but asks before each action. Autopilot automatically reads and
-searches workspace files and applies edits; shell commands and URL fetches still
-require approval. Project instructions are read from `.github/copilot-instructions.md`,
+New chats start in Autopilot: workspace reads, searches, edits, and shell
+commands run without per-call approval; URL fetches still require approval. Ask
+mode disables callable tools. Plan mode reads workspace context without editing
+or running shell commands. Agent mode asks before tool calls. Project
+instructions are read from `.github/copilot-instructions.md`,
 `copilot-instructions.md`, and `AGENTS.md` when present. Choose a model that
 supports tool calls for Agent or Autopilot. The chat winbar shows the active mode
 and model. Keep applies the nearest suggested diff; Undo uses Neovim undo in the
-source buffer. Dictation uses macOS voice input, then `Ctrl-S` submits the prompt.
+source buffer. Press `Enter` in the chat input to submit a prompt, including
+dictated text opened with `Space a v`.
+Skills from workspace and user skill directories, plus installed VS Code
+extensions, are available as slash prompts. Type `/` and press `Tab` to browse
+them; for example, use `/find-skills`. `Space a L` reloads skill files,
+`Space a n` starts a clean conversation, and `Space a s` / `Space a h` save and load
+named history. Older prompts and tool messages fold automatically.
 
 ## Extra search tools
 
@@ -276,7 +322,7 @@ and other installed themes). To change the startup theme, edit `colorscheme` in
 When the VS Code terminal has focus, `Cmd+J`, `Cmd+K`, `Cmd+P`,
 `Cmd+Shift+F`, and `Cmd+Backspace` are forwarded to Neovim (works inside tmux
 too). `Cmd+Backspace` deletes to the start of the current line. In a plain shell
-these keys do nothing useful. Click the editor area to use VS Code's own bindings. If the mappings do not work in the terminal, use `Space n b` / `Space n f` for back / forward, `Space Space` to find a file, and `Space /` to search text.
+these keys do nothing useful. Click the editor area to use VS Code's own bindings. If the mappings do not work in the terminal, use `Space n b` / `Space n f` for back / forward, `Space Space` to find a file, and `Space / /` to search text.
 
 ### If a shortcut is missing
 

@@ -11,7 +11,6 @@ return {
       { "<leader>th", "<cmd>ToggleTerm direction=horizontal<cr>",desc = "Terminal (horizontal split)" },
       { "<leader>tv", "<cmd>ToggleTerm direction=vertical<cr>",  desc = "Terminal (vertical split)" },
       { "<leader>tf", "<cmd>ToggleTerm direction=tab<cr>",       desc = "Terminal (full tab)" },
-      { "<leader>tg", "<cmd>TermExec direction=float cmd='lazygit'<cr>", desc = "Terminal Lazygit" },
       {
         "<leader>tn",
         function()

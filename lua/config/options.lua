@@ -4,6 +4,7 @@
 
 -- Enable mouse in all modes (required for Ctrl+Click)
 vim.opt.mouse = "a"
+vim.opt.clipboard = "unnamedplus"
 vim.opt.showcmd = true
 vim.opt.showcmdloc = "statusline"
 

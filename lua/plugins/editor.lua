@@ -69,15 +69,14 @@ return {
   },
 
   -- ─────────────────────────────────────────────────────────────────────────
-  -- Harpoon 2 — pin up to 4 "hot" files and jump between them instantly
-  -- Think: VS Code pinned tabs but with instant numbered access
+  -- Harpoon 2 — automatically collect visited files for numbered access
   -- ─────────────────────────────────────────────────────────────────────────
   {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
     dependencies = { "nvim-lua/plenary.nvim" },
+    event = "BufEnter",
     keys = {
-      { "<leader>ha", function() require("harpoon"):list():add() end,                          desc = "Harpoon: Add file" },
       { "<leader>hh", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, desc = "Harpoon: Menu" },
       { "<leader>1",  function() require("harpoon"):list():select(1) end,                      desc = "Harpoon: File 1" },
       { "<leader>2",  function() require("harpoon"):list():select(2) end,                      desc = "Harpoon: File 2" },
@@ -93,6 +92,24 @@ return {
         sync_on_ui_close = true,
       },
     },
+    config = function(_, opts)
+      local harpoon = require("harpoon")
+      harpoon:setup(opts)
+
+      local function add_current_file()
+        local buffer = vim.api.nvim_get_current_buf()
+        if vim.bo[buffer].buftype == "" and vim.bo[buffer].buflisted and vim.api.nvim_buf_get_name(buffer) ~= "" then
+          harpoon:list():add()
+        end
+      end
+
+      local group = vim.api.nvim_create_augroup("HarpoonAutoAssign", { clear = true })
+      vim.api.nvim_create_autocmd("BufEnter", {
+        group = group,
+        callback = add_current_file,
+      })
+      add_current_file()
+    end,
   },
 
   -- ─────────────────────────────────────────────────────────────────────────

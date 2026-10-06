@@ -1,139 +1,221 @@
-# Neovim Configuration
+<div align="center">
+<pre align="center">
+ ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
+ ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║
+ ██╔██╗ ██║█████╗  ██║   ██║██║   ██║██║██╔████╔██║
+ ██║╚██╗██║██╔══╝  ██║   ██║╚██╗ ██╔╝██║██║╚██╔╝██║
+ ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║
+ ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝
+</pre>
+<h1>NEOVIM // TERMINAL-BASED DEVELOPMENT SETUP</h1>
+<p>LazyVim core · Lua configuration · terminal-first workflow</p>
+<p>
+  <img src="https://img.shields.io/badge/EDITOR-NEOVIM-57A143?style=for-the-badge&logo=neovim&logoColor=white" alt="Editor: Neovim">
+  <img src="https://img.shields.io/badge/FRAMEWORK-LAZYVIM-2389DA?style=for-the-badge" alt="Framework: LazyVim">
+  <img src="https://img.shields.io/badge/CONFIG-LUA-2C2D72?style=for-the-badge&logo=lua&logoColor=white" alt="Configuration: Lua">
+</p>
+</div>
 
-LazyVim with VS Code-style search, code navigation, Copilot, and Vim bindings.
-The leader key is Space. Launch `nvim` from your project directory.
+## EDITOR PIPELINE
 
-Need a shortcut by task? Start with the [Neovim + tmux cheat sheet](NVIM-CHEATSHEET.md). It includes a Space-prefix index; press `Space` in Neovim and pause to see the live WhichKey options, then press a prefix and pause for its submenu.
+```mermaid
+flowchart LR
+    PROJECT[PROJECT] --> DISCOVER[DISCOVER]
+    DISCOVER --> SEARCH[Telescope]
+    DISCOVER --> NAV[Harpoon / Neo-tree]
+    SEARCH --> EDIT[EDIT]
+    NAV --> EDIT
+    EDIT --> INTEL[Tree-sitter / LSP / Blink]
+    INTEL --> REVIEW[REVIEW]
+    REVIEW --> GIT[Gitsigns / Diffview / Lazygit]
+    GIT --> VERIFY[VERIFY]
+    VERIFY --> TOOLS[DAP / Neotest / Copilot]
+```
 
-## Shortcuts
+## PLUGIN FIELD NOTES
 
-| Action | Shortcut | Terminal-friendly alternative |
-| --- | --- | --- |
-| Return to normal mode (insert or visual) | `jj` | `Esc` |
-| Search text across project files | `Cmd+Shift+F` | `Space /` or `Space s g` |
-| Find files | `Cmd+P` | `Space Space` |
-| Command palette | `Space s C` | |
-| Go to definition | `F12` | `gd` |
-| Find symbol references | `Shift+F12` | `gr` or `Space c r` |
-| Search the word under the cursor | `Space s w` | |
-| Go to implementation | `gI` | |
-| Go to type definition | `gy` | |
-| Hover documentation | `K` | |
-| Rename symbol | `Space c R` | |
-| Code actions | `Space c a` | |
-| Navigate back / forward | `Cmd+J` / `Cmd+K` | `Space n b` / `Space n f`, or `Ctrl+O` / `Ctrl+I` |
-| Delete to line start | `Cmd+Backspace` | In insert and normal mode |
-| Toggle word wrap | `Space u w` | |
-| Scroll horizontally | `Space z h` / `Space z l` | 10 columns left / right; wrap must be off |
-| Toggle auto-save | `Space u a` | Starts enabled; statusline shows ON/OFF and the toggle confirms it |
-| Markdown preview | `Space m p` / `Space m b` | Render in Neovim / open browser preview |
-| Toggle terminal panel | `Cmd+H` | `Space t h` |
-| Copilot Chat | `Space a c` | `:CopilotChat` |
-| Choose Copilot model / mode | `Space a m` / `Space a M` | |
-| Start Copilot Plan mode | `Space a P` | Read-only planning |
-| Start chat in Autopilot mode | `Space a A` | |
-| Keep / undo Copilot diff | `Space a k` / `Space a u` | |
-| Stop Copilot response | `Space a x` | |
-| Voice prompt | `Space a v` | macOS Dictation, then `Ctrl+S` |
-| Accept Copilot suggestion | `Tab` | |
-| Explain / fix selected code | `Space a e` / `Space a f` | |
-| File explorer | `Space e` | |
-| Next / previous open file | `Shift+L` / `Shift+H` | |
-| Pick or close an open file | `Space b b` / `Space b d` | |
-| Close current file | `Space b D` | |
-| Lazygit | `Space g g` | `Space t g` |
-| New terminal | `Space t n` | `Ctrl+`` |
-| Vertical / horizontal split | `Space w v` / `Space w s` | |
-| New tab / close window | `Space w t` / `Space w c` | |
+### 01 / Telescope
 
-In the VS Code terminal, `Cmd+J`, `Cmd+K`, `Cmd+P`, and `Cmd+Shift+F` are
-forwarded to Neovim. Use `Space s C` for the command picker. See the
-[cheat sheet](NVIM-CHEATSHEET.md) for task-based instructions and alternatives.
-The statusline also shows the date, the last Ex command, and pending key sequences.
+Telescope is the project discovery and fuzzy-selection layer. Its pickers unify file lookup, live grep, open buffers, symbols, and current-buffer search.
 
-## Search and References
+- Root-aware searches use the detected project root, falling back to the current working directory.
+- File discovery uses `fd`; grep uses ripgrep, includes hidden files, and excludes `.git` and `node_modules`.
+- FZF-native improves fuzzy ranking. Search state also supports case-sensitive and whole-word matching.
 
-Telescope searches the detected project root, not just the current file's
-directory. Text search uses `ripgrep`, includes hidden files, respects ignore
-files, and excludes `.git` and `node_modules`. Use `Space s G` to search the
-current working directory instead. Search results can be sent to the quickfix
-list with `Ctrl+Q` or to Trouble with `Ctrl+T`.
+**Lua excerpt · project grep**
 
-Text search finds literal occurrences. `gr` finds semantic references using the
-attached language server, including references in other project files. It
-requires a supported language and a correctly detected project root. Use
-`:LspInfo` to inspect attached servers and `:Mason` to inspect installed tools.
-References outside the language server's workspace cannot be guaranteed.
+```lua
+require("telescope.builtin").live_grep({
+  cwd = LazyVim.root() or vim.uv.cwd(),
+  additional_args = { "--hidden", "--glob=!.git", "--glob=!node_modules" },
+})
+```
 
-## Copilot
+---
 
-Inline suggestions and Copilot Chat are configured. Run `:Copilot auth` once
-and finish GitHub authentication in your browser; a Copilot entitlement is
-required. Run `:Copilot status` to check the connection.
+### 02 / Harpoon
 
-Copilot uses its standalone server, downloaded on first load, so it does not
-require upgrading your project's Node.js 20 runtime to Node.js 22. Suggestions
-are enabled for code and Markdown, but disabled for plain text and commit
-messages, matching the local VS Code settings. Next-edit suggestions remain off.
-The chat winbar shows the selected model and mode. Ask disables callable tools;
-Agent requires approval for tool calls; Autopilot automatically reads, searches,
-and edits workspace files while keeping shell commands approval-gated. Plan
-reads project context and returns a plan without edits or shell commands. The
-project instruction paths `.github/copilot-instructions.md`,
-`copilot-instructions.md`, and `AGENTS.md` are included in chat prompts when
-present. Use `Space a k` to apply the nearest suggested diff, `Space a u` to
-undo a source-buffer change, and `Space a x` to stop a response. `Space a v`
-opens chat for macOS Dictation; press `Ctrl+S` to submit the dictated prompt.
-Use a tool-capable model for Agent or Autopilot.
+Harpoon keeps a small, persistent working set beside Telescope's broad search. This configuration automatically collects eligible files and makes them available through numbered slots and sequential navigation.
 
-## Completion and Markdown
+- A `BufEnter` callback adds named, listed file buffers while skipping special and unnamed buffers.
+- `save_on_toggle` and `sync_on_ui_close` preserve the list as its menu opens and closes.
+- Numbered selections suit recurring transitions between source, tests, and configuration files.
 
-Blink shows completion suggestions and documentation while typing; press
-`Ctrl+Space` to open the menu manually. TypeScript inlay hints show parameter,
-property, return, and variable types. Use `Space c M` to add missing imports and
-`Space c o` to organize imports. For Markdown, `Space m p` toggles styled
-rendering inside the buffer; `Space m b` opens a live browser preview.
+**Lua excerpt · list lifecycle**
 
-## Dependencies
+```lua
+local harpoon = require("harpoon")
+harpoon:setup({ settings = { save_on_toggle = true, sync_on_ui_close = true } })
+harpoon:list():add()
+harpoon:list():select(1)
+```
 
-Neovim 0.11+, `git`, `fd`, `ripgrep`, `make`, `curl`, and `unzip` are used by
-the configured navigation and Copilot plugins. Mason manages language servers;
-individual servers may also require Node.js, Go, or .NET.
+---
 
-Lazygit is built into current LazyVim's Snacks integration. There is no
-`lazyvim.plugins.extras.editor.lazygit` extra. Install the `lazygit` executable
-to use `Space g g`.
+### 03 / Neo-tree
 
-VS Code fonts and font ligatures are controlled by the terminal or GUI, not
-this Neovim configuration. VS Code extensions and MCP integrations are not
-automatically shared with Neovim.
+Neo-tree is the persistent filesystem view. It complements fuzzy search with a navigable directory hierarchy, live file updates, and Git state rendered beside project entries.
 
-## Terminal and tmux
+- Dotfiles, ignored files, and Git-ignored files remain visible for full workspace inspection.
+- The current buffer is revealed automatically, and opened directories stay expanded.
+- A libuv watcher refreshes the tree when files change outside Neovim; Mini Icons supplies file glyphs.
 
-The repository includes a tmux setup at `~/.tmux.conf`. Start it with
-`tmux new -A -s work`; the prefix is `Ctrl-Space`.
+**Lua excerpt · filesystem behavior**
 
-| Action | Shortcut |
-| --- | --- |
-| Split left/right | `Prefix` then `|` |
-| Split top/bottom | `Prefix` then `-` |
-| Move between panes | `Prefix` then `h/j/k/l` or `Alt+h/j/k/l` |
-| Create window | `Prefix` then `c` |
-| Next / previous window | `Prefix` then `n` / `p` |
-| Rename window | `Prefix` then `,` |
-| Detach session | `Prefix` then `d` |
-| Reload tmux config | `Prefix` then `r` |
+```lua
+filesystem = {
+  filtered_items = { visible = true, hide_dotfiles = false, hide_gitignored = false },
+  follow_current_file = { enabled = true, leave_dirs_open = true },
+  use_libuv_file_watcher = true,
+}
+```
 
-Use Neovim's terminal shortcuts inside a tmux pane when you need an integrated
-editor terminal. Use tmux panes when you want a persistent shell, server, logs,
-or a second editor session beside Neovim.
+---
 
-The integrated terminal supports named sessions (`Space t n`), session picking
-(`Space t P`), and renaming (`Space t N`). Press `Esc` to return to Neovim normal
-mode without closing the shell; `Ctrl+q` hides the terminal and keeps the
-session alive. `Space u a` toggles debounced file auto-save; special buffers are
-excluded.
+### 04 / nvim-treesitter
 
-One Dark Pro is the default transparent dark theme, with brighter text and
-comments. Use `Space u D` for the dark theme and `Space u L` for Catppuccin
-Latte. The cursor is a block in both normal and insert mode.
+Tree-sitter parses source into syntax trees, giving language-aware features structural information beyond token matching. LazyVim manages the core integration; this setup also enables Treesitter Context for the active code scope.
+
+- Structural parsing improves highlighting around nested expressions and language constructs.
+- Parser behavior is supplied by LazyVim rather than a separate local plugin override.
+- Neovim's Lua API can start highlighting for a buffer and language explicitly.
+
+**Lua API example · start highlighting**
+
+```lua
+vim.treesitter.start(0, "lua")
+```
+
+---
+
+### 05 / LSP + Mason
+
+The Language Server Protocol provides semantic editor features; Mason manages installation of the configured servers and supporting tools. Together they connect navigation and diagnostics to language-specific analyzers instead of plain-text search.
+
+- Configured coverage includes TypeScript, JavaScript, Go, Python, C#, HTML, CSS, JSON, YAML, and Tailwind.
+- LSP features include definitions, references, rename, diagnostics, code actions, and TypeScript inlay hints.
+- Mason's ensure list keeps servers, formatters, and linters available across projects.
+
+**Lua excerpt · managed tools**
+
+```lua
+opts = {
+  ensure_installed = { "gopls", "goimports", "omnisharp", "prettier" },
+}
+```
+
+---
+
+### 06 / Blink.cmp
+
+Blink.cmp provides the completion UI and signature help used while editing. The local configuration makes suggestions and documentation appear automatically, reducing the need to leave the current expression to inspect an API.
+
+- Completion menus open automatically and show documentation after a short delay.
+- Signature help displays parameter information in a bordered window.
+- Ghost text is disabled in Blink and `nvim-cmp`, keeping Copilot's inline suggestion layer distinct.
+
+**Lua excerpt · completion presentation**
+
+```lua
+opts.completion.menu = { auto_show = true }
+opts.completion.documentation = { auto_show = true, auto_show_delay_ms = 150 }
+opts.signature = { enabled = true }
+```
+
+---
+
+### 07 / Gitsigns + Diffview
+
+These tools cover different scales of code review. Gitsigns annotates the current buffer and exposes individual change hunks; Diffview opens repository and file history in dedicated side-by-side layouts.
+
+- Current-line blame is rendered at the end of the line after a short delay.
+- Hunks can be previewed, staged, reset, and traversed without staging the entire file.
+- Diffview uses a horizontal two-panel layout for changes and a three-panel layout for merges.
+
+**Lua excerpt · review options**
+
+```lua
+local gitsigns_opts = {
+  current_line_blame = true,
+  current_line_blame_opts = { virt_text_pos = "eol", delay = 400 },
+}
+local diffview_opts = { view = { default = { layout = "diff2_horizontal" } } }
+```
+
+---
+
+### 08 / Lazygit
+
+Lazygit is a terminal Git application, launched through LazyVim's native Snacks integration. It provides a full repository workflow without turning the Neovim buffer itself into a status interface.
+
+- The integration opens against the project root, keeping repository context consistent with search and navigation.
+- Its terminal UI organizes working-tree changes, staging, branches, commits, and history.
+- It complements Gitsigns and Diffview: use those for inline edits and visual comparisons, and Lazygit for broader repository operations.
+
+**Lua API example · open the Git interface**
+
+```lua
+Snacks.lazygit()
+```
+
+---
+
+### 09 / nvim-dap + Neotest
+
+nvim-dap coordinates Debug Adapter Protocol sessions; Neotest provides a shared test interface. The configured adapters bridge test and debugger workflows across JavaScript, TypeScript, Go, and .NET.
+
+- DAP configurations cover launch and attach flows, breakpoints, scopes, and variable inspection.
+- JavaScript debugging uses VS Code's `js-debug`; Go uses Delve; .NET uses `netcoredbg`.
+- Neotest adapters cover Vitest, Jest, Go, and .NET, including test-focused debugging integration.
+
+**Lua excerpt · adapter registration**
+
+```lua
+opts.adapters = {
+  require("neotest-vitest"),
+  require("neotest-go")({ recursive_run = true }),
+}
+```
+
+---
+
+### 10 / Copilot + CopilotChat
+
+Copilot provides inline completions; CopilotChat adds a tool-aware conversation panel. Its modes separate ordinary questions, read-only planning, approval-based agent work, and trusted Autopilot actions.
+
+- Inline suggestions use the binary server and trigger automatically while editing.
+- Plan mode limits tools to workspace reads; Agent asks before actions, while Autopilot trusts selected workspace and shell tools.
+- In VS Code, chat delegates to the native client. Standalone Neovim uses CopilotChat and can load installed skills as prompts.
+
+**Lua excerpt · read-only Plan mode**
+
+```lua
+Plan = {
+  tools = { "file", "buffer", "glob", "grep", "gitdiff", "selection" },
+  trusted_tools = { "file", "buffer", "glob", "grep", "gitdiff", "selection" },
+}
+```
+
+---
+
+Exact keys and task workflows live in the [Neovim + tmux cheatsheet](NVIM-CHEATSHEET.md).
