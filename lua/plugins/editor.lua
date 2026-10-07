@@ -1,4 +1,14 @@
 return {
+  {
+    "folke/trouble.nvim",
+    keys = {
+      { "<leader>xx", false },
+      { "<leader>xX", false },
+      { "<leader>Xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "Diagnostics (Trouble)" },
+      { "<leader>XX", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "Buffer Diagnostics (Trouble)" },
+    },
+  },
+
   -- Disable oil.nvim so LazyVim's default neo-tree sidebar is used instead
   { "stevearc/oil.nvim", enabled = false },
 

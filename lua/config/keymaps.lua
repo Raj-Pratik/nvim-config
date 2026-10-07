@@ -49,6 +49,9 @@ vim.keymap.set("n", "<leader>bd", "<cmd>BufferLinePickClose<cr>", { desc = "Pick
 vim.keymap.set("n", "<leader>bD", function()
   Snacks.bufdelete(0)
 end, { desc = "Close Current Buffer" })
+vim.keymap.set("n", "<leader>x", function()
+  Snacks.bufdelete(0)
+end, { desc = "Close Current Buffer" })
 
 -- Ctrl+Click → go to definition (like VS Code)
 -- <C-LeftMouse> moves the cursor to the clicked position, then jumps to definition.

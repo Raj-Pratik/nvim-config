@@ -99,7 +99,14 @@ return {
         end,
         desc = "Grep (cwd)",
       },
-      { "<leader>bf", "<cmd>Telescope buffers<cr>", desc = "Find Open Buffers" },
+      {
+        "<leader>b",
+        function()
+          require("telescope.builtin").buffers({ initial_mode = "normal" })
+        end,
+        desc = "Switch Open Buffers",
+      },
+      { "<leader>bf", false },
       -- Cmd+P → find files (like VS Code)
       { "<D-p>", LazyVim.pick("files"), desc = "Find Files (Cmd+P)", mode = { "n", "i", "x" } },
       { "<leader>fc", "<cmd>Telescope current_buffer_fuzzy_find<cr>", desc = "Find in Current File" },

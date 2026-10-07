@@ -96,6 +96,9 @@ there before trying to run queries.
 | Markdown in-buffer / browser preview | `Space m p` / `Space m b` |
 | Quit | `Space q` |
 
+When Neovim opens to an empty unnamed buffer, the Snacks landing page appears
+instead of `[No Name]`. It also appears when you return to an empty buffer.
+
 ## Find files and text
 
 Use `Cmd-P` to open a file by name, or `Space Space` if the terminal does not pass Cmd keys to Neovim. Use `Space f c` to find text in the current file and `Space f g` or `Space / /` to search across the project. Type a few words to narrow results; press `Enter` to open a result and `Esc` to close the picker. Press `Space f` and pause to see these search actions in the WhichKey popup.
@@ -144,7 +147,7 @@ and pause to see the debugger actions in WhichKey.
 | Code action | `Space c a` |
 | Back / forward | `Cmd-J` / `Cmd-K` or `Space n b` / `Space n f` |
 | Symbol outline | `Space c s` |
-| Diagnostics list | `Space x x` |
+| Diagnostics list / current buffer diagnostics | `Space X x` / `Space X X` |
 
 When a language server is attached, `gr` finds references to a symbol; project text search is a fallback when no language server is available. Check attached servers with `:LspInfo`.
 
@@ -153,9 +156,11 @@ When a language server is attached, `gr` finds references to a symbol; project t
 | Action | Keys |
 | --- | --- |
 | Next / previous buffer | `Shift-L` / `Shift-H` |
+| Switch open buffers (normal-mode picker) | `Space b` |
 | Pick an open buffer | `Space b b` |
 | Pick a buffer to close | `Space b d` |
 | Close current buffer | `Space b D` |
+| Close current buffer (shortcut) | `Space x` |
 | Close other buffers | `Space b c` |
 | Close buffers left / right | `Space b l` / `Space b r` |
 | Add file to Harpoon | `Space h a` |
@@ -167,7 +172,7 @@ When a language server is attached, `gr` finds references to a symbol; project t
 | Close window | `Space w c` |
 | Keep only current window | `Space w o` |
 
-The teal `×` on a file tab closes that file. `Space b d` lets you choose a file to close; `Space b D` closes the current file. These close file buffers, not split windows. Use `Space w c` to close a split. One Dark Pro is the default transparent dark theme; `Space u D` reapplies it and `Space u L` switches to Catppuccin Latte.
+The teal `×` on a file tab closes that file. `Space b d` lets you choose a file to close; `Space b D` and `Space x` close the current file. The `Space b` buffer picker opens in normal mode so you can navigate with `j`/`k` and press `Enter` to switch. These close file buffers, not split windows. Use `Space w c` to close a split. One Dark Pro is the default transparent dark theme; `Space u D` reapplies it and `Space u L` switches to Catppuccin Latte.
 
 In Telescope, press `Tab` to select several files, then `Ctrl-Q` to send them to
 quickfix. Use `:copen` to inspect the list and `:cfdo edit` to open the selected
@@ -306,7 +311,7 @@ to organize imports. For Markdown, `Space m p` renders headings, code, and table
 inside the buffer; `Space m b` opens a live browser preview. `Space c a` opens
 code actions, `Space c R` renames a symbol, and `Space c f` formats when a
 formatter is available. `:Mason` shows installed tools; `:LspInfo` shows active
-language servers. Diagnostics appear inline and in `Space x x`.
+language servers. Diagnostics appear inline and in `Space X x`.
 
 ## Appearance and shortcuts
 

@@ -262,6 +262,43 @@ return {
   -- Snacks dashboard header
   {
     "folke/snacks.nvim",
+    init = function()
+      local function open_dashboard_if_empty(buffer)
+        if vim.bo[buffer].buftype ~= "" or vim.api.nvim_buf_get_name(buffer) ~= "" then
+          return
+        end
+
+        local lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+        if #lines ~= 1 or lines[1] ~= "" then
+          return
+        end
+
+        vim.schedule(function()
+          if not vim.api.nvim_buf_is_valid(buffer) or vim.api.nvim_get_current_buf() ~= buffer then
+            return
+          end
+          local current_lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+          if vim.bo[buffer].buftype == "" and vim.api.nvim_buf_get_name(buffer) == ""
+            and #current_lines == 1 and current_lines[1] == "" then
+            require("snacks").dashboard.open()
+          end
+        end)
+      end
+
+      local group = vim.api.nvim_create_augroup("DashboardOnEmptyBuffer", { clear = true })
+      vim.api.nvim_create_autocmd("BufEnter", {
+        group = group,
+        callback = function(event)
+          open_dashboard_if_empty(event.buf)
+        end,
+      })
+      vim.api.nvim_create_autocmd("VimEnter", {
+        group = group,
+        callback = function()
+          open_dashboard_if_empty(vim.api.nvim_get_current_buf())
+        end,
+      })
+    end,
     opts = {
       picker = {
         sources = {
@@ -273,6 +310,7 @@ return {
         },
       },
       dashboard = {
+        enabled = true,
         preset = {
           header = [[
  ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗
