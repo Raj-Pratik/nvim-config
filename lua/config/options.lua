@@ -11,7 +11,7 @@ vim.opt.showcmdloc = "statusline"
 vim.g.lazyvim_picker = "telescope"
 -- Disable automatic formatting on save (e.g. Prettier via conform.nvim).
 -- Toggle for current session with <leader>uf, or globally with <leader>uF.
-vim.g.lazyvim_autoformat = false
+vim.g.autoformat = false
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.guicursor = "a:block"
